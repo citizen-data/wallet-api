@@ -1,4 +1,4 @@
-#wallet-api
+# wallet-api
 
 ```
 POST    /wallet                                 Create wallet
