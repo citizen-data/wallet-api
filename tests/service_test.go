@@ -84,7 +84,6 @@ func TestGetList(t *testing.T) {
 }
 
 func get(t *testing.T, url string) []byte {
-	t.Log(url)
 	req, err := http.NewRequest("GET", url, nil)
 	assert.NoError(t, err)
 
@@ -103,17 +102,21 @@ func get(t *testing.T, url string) []byte {
 }
 
 func TestGetItems(t *testing.T) {
-	url := fmt.Sprintf("%s/wallet/%s/data/%s/latest", testUrl, urlEncode(walletID), "test123")
-	b := get(t, url)
+	// get wallet list
+	get(t, fmt.Sprintf("%s/wallet/%s", testUrl, urlEncode(walletID)))
+
+	// get item history
+	get(t, fmt.Sprintf("%s/wallet/%s/data/%s", testUrl, urlEncode(walletID), "test123"))
+
+	// get latest
+	b := get(t, fmt.Sprintf("%s/wallet/%s/data/%s/latest", testUrl, urlEncode(walletID), "test123"))
 
 	var data wallets.WalletDataItem
-	json.Unmarshal(b, &data)
+	err := json.Unmarshal(b, &data)
+	assert.NoError(t, err)
 
-	url = fmt.Sprintf("%s/wallet/%s/data/%s/%s", testUrl, urlEncode(walletID), "test123", urlEncode(data.VersionHash))
-	get(t, url)
-
-	url = fmt.Sprintf("%s/wallet/%s/data/%s", testUrl, urlEncode(walletID), "test123")
-	get(t, url)
+	// get specific hash
+	get(t, fmt.Sprintf("%s/wallet/%s/data/%s/%s", testUrl, urlEncode(walletID), "test123", urlEncode(data.VersionHash)))
 
 }
 

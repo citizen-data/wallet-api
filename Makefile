@@ -12,6 +12,7 @@ clean:
 	rm -rf ./bin ./vendor Gopkg.lock
 
 test:
+	go clean -testcache
 	go test -v ./...
 
 deploy: clean build
