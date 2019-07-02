@@ -91,7 +91,7 @@ functions:
     handler: bin/add-data
     events:
       - http:
-          path: wallet/{wallet}
+          path: wallet/{wallet}/data
           method: post
           cors: true
           private: true

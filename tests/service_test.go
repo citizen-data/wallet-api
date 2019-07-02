@@ -45,7 +45,7 @@ func TestCreateWallet(t *testing.T) {
 }
 
 func TestAddData(t *testing.T) {
-	url := fmt.Sprintf("%s/wallet/%s", testUrl, walletID)
+	url := fmt.Sprintf("%s/wallet/%s/data", testUrl, walletID)
 
 	dataItem := &wallets.WalletDataItem{
 		ReferenceID: "test123",
