@@ -2,9 +2,12 @@ package api
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"github.com/citizendata/datawallet/wallet-api/store/wallets"
 	"log"
+	"strings"
 )
 
 type WalletAPI struct {
@@ -45,6 +48,11 @@ func (c *WalletAPI) AddData(ctx context.Context, request *ApiRequest) *ApiRespon
 	}
 
 	dataItem.CreatedAt = request.RequestTimeUTC
+
+	encrypted := strings.Join(dataItem.EncryptedChunks,"")
+	hash := sha256.Sum256([]byte(encrypted))
+	dataItem.VersionHash = base64.StdEncoding.EncodeToString(hash[:])
+
 	err = c.walletStore.AddDataItem(ctx, request.TenantID, walletID, &dataItem)
 
 	if err != nil {

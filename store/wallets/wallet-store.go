@@ -43,7 +43,6 @@ func (w *Wallet) CalculateWalletId() (string, error) {
 	return base64.StdEncoding.EncodeToString(b[:]), nil
 }
 
-
 type WalletList struct {
 	//map of reference IDs to versions, ordered from oldest to newest
 	Items map[string][]*WalletDataItemSummary `json:"items"`
@@ -52,6 +51,7 @@ type WalletList struct {
 type WalletDataItem struct {
 	ReferenceID     string   `json:"referenceId"`
 	EncryptedChunks []string `json:"encryptedChunks"`
+	VersionHash     string   `json:"versionHash"`
 	DataSignature   string   `json:"dataSignature"`
 	CreatedAt       string   `json:"createdAt"`
 }
@@ -62,9 +62,10 @@ type WalletDataItemList struct {
 
 // WalletDataItem minus EncryptedChunks
 type WalletDataItemSummary struct {
-	ReferenceID     string   `json:"referenceId"`
-	DataSignature   string   `json:"dataSignature"`
-	CreatedAt       string   `json:"createdAt"`
+	ReferenceID   string `json:"referenceId"`
+	DataSignature string `json:"dataSignature"`
+	CreatedAt     string `json:"createdAt"`
+	VersionHash   string `json:"versionHash"`
 }
 
 func (w *WalletDataItem) Json() string {
@@ -80,7 +81,7 @@ type WalletStore interface {
 	GetWallet(ctx context.Context, tenantID, walletId string) (*Wallet, error)
 	ListData(ctx context.Context, tenantID, walletID string) (*WalletList, error)
 	GetLatestDataItem(ctx context.Context, tenantID, walletID, referenceID string) (*WalletDataItem, error)
-	GetDataItem(ctx context.Context, tenantID, walletID, referenceID, version string) (*WalletDataItem, error)
+	GetDataItem(ctx context.Context, tenantID, walletID, referenceID, hash string) (*WalletDataItem, error)
 	GetDataItemHistory(ctx context.Context, tenantID, walletID, referenceID string) (*WalletDataItemList, error)
 	AddDataItem(ctx context.Context, tenantID, walletID string, data *WalletDataItem) error
 }

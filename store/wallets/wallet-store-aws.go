@@ -39,6 +39,7 @@ type DynamoWalletData struct {
 	Summary     *WalletDataItemSummary `json:"summary"`
 	ReferenceID string                 `json:"referenceId"`
 	CreatedAt   string                 `json:"createdAt"`
+	VersionHash    string                 `json:"versionHash"`
 }
 
 func NewAWSWalletStore(db *dynamodb.DynamoDB, s3 *s3.S3) *AWSWalletStore {
@@ -91,7 +92,7 @@ func (s *AWSWalletStore) GetWallet(ctx context.Context, tenantID, walletID strin
 }
 
 func (s *AWSWalletStore) AddDataItem(ctx context.Context, tenantID, walletID string, data *WalletDataItem) error {
-	objectKey := fmt.Sprintf("%s/%s/%s/%s", tenantID, walletID, data.ReferenceID, data.CreatedAt)
+	objectKey := fmt.Sprintf("%s/%s/%s/%s", tenantID, walletID, data.ReferenceID, data.VersionHash)
 
 	item, err := dynamodbattribute.MarshalMap(&DynamoWalletData{
 		WalletID:  fmt.Sprintf("%s/%s", tenantID, walletID),
@@ -100,7 +101,9 @@ func (s *AWSWalletStore) AddDataItem(ctx context.Context, tenantID, walletID str
 			DataSignature: data.DataSignature,
 			ReferenceID:   data.ReferenceID,
 			CreatedAt:     data.CreatedAt,
+			VersionHash:      data.VersionHash,
 		},
+		VersionHash:      data.VersionHash,
 		CreatedAt:   data.CreatedAt,
 		ReferenceID: fmt.Sprintf("%s/%s/%s", tenantID, walletID, data.ReferenceID),
 	})
@@ -213,7 +216,7 @@ func (s *AWSWalletStore) getObjects(objectKeys []string) ([]*WalletDataItem, err
 func (s *AWSWalletStore) GetLatestDataItem(ctx context.Context, tenantID, walletID, referenceId string) (*WalletDataItem, error) {
 	refID := fmt.Sprintf("%s/%s/%s", tenantID, walletID, referenceId)
 	key := expression.Key("referenceId").Equal(expression.Value(refID))
-	proj := expression.NamesList(expression.Name("createdAt"))
+	proj := expression.NamesList(expression.Name("objectKey"))
 	expr, err := expression.NewBuilder().WithKeyCondition(key).WithProjection(proj).Build()
 	if err != nil {
 		return nil, err
@@ -221,14 +224,14 @@ func (s *AWSWalletStore) GetLatestDataItem(ctx context.Context, tenantID, wallet
 
 	// get last entry for this reference ID
 	res, err := s.db.Query(&dynamodb.QueryInput{
-		TableName: aws.String(dataTable),
+		TableName:                 aws.String(dataTable),
 		IndexName:                 aws.String(dataRefIndex),
 		KeyConditionExpression:    expr.KeyCondition(),
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		ProjectionExpression:      expr.Projection(),
-		Limit: aws.Int64(1),
-		ScanIndexForward: aws.Bool(false),
+		Limit:                     aws.Int64(1),
+		ScanIndexForward:          aws.Bool(false),
 	})
 
 	if err != nil {
@@ -242,14 +245,14 @@ func (s *AWSWalletStore) GetLatestDataItem(ctx context.Context, tenantID, wallet
 			return nil, err
 		}
 
-		return s.GetDataItem(ctx, tenantID, walletID, referenceId, dwd.CreatedAt)
+		return s.getObject(dwd.ObjectKey)
 	}
 
-	return nil, errors.New("cannot find "+refID)
+	return nil, errors.New("cannot find " + refID)
 }
 
-func (s *AWSWalletStore) GetDataItem(ctx context.Context, tenantID, walletID, referenceId, version string) (*WalletDataItem, error) {
-	objectKey := fmt.Sprintf("%s/%s/%s/%s", tenantID, walletID, referenceId, version)
+func (s *AWSWalletStore) GetDataItem(ctx context.Context, tenantID, walletID, referenceId, hash string) (*WalletDataItem, error) {
+	objectKey := fmt.Sprintf("%s/%s/%s/%s", tenantID, walletID, referenceId, hash)
 	return s.getObject(objectKey)
 }
 
