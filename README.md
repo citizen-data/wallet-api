@@ -1,13 +1,12 @@
 # wallet-api
 
 ```
-POST    /wallet                                 Create wallet
-GET     /wallet/{walletID}                      Get wallet metadata
-POST    /wallet/{walletID}/data                 Add data item
-GET     /wallet/{walletID}/data                 Get list of data (summary data)
-GET     /wallet/{walletID}/{refID}              Get history for dataItem (w/encrypted data)
-GET     /wallet/{walletID}/{refID}/latest       Get latest version of dataItem (w/encrypted data)
-GET     /wallet/{walletID}/{refID}/{dataHash}   Get specific version of dataItem (w/encrypted data)
+POST    /wallet                                     Create wallet
+POST    /wallet/{walletID}                          Add data item
+GET     /wallet/{walletID}                          Get list of data (summary data)
+GET     /wallet/{walletID}/data/{refID}             Get history for dataItem (w/encrypted data)
+GET     /wallet/{walletID}/data/{refID}/latest      Get latest version of dataItem (w/encrypted data)
+GET     /wallet/{walletID}/data/{refID}/{dataHash}  Get specific version of dataItem (w/encrypted data)
 ```
 
 
