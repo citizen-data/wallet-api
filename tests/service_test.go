@@ -75,8 +75,28 @@ func TestAddData(t *testing.T) {
 	assert.Equal(t, 200, resp.StatusCode)
 }
 
-func TestListData(t *testing.T) {
-	url := fmt.Sprintf("%s/wallet/%s/list", testUrl, walletID)
+func TestGetList(t *testing.T) {
+	url := fmt.Sprintf("%s/wallet/%s", testUrl, walletID)
+	req, err := http.NewRequest("GET", url, nil)
+	assert.NoError(t, err)
+
+	signRequest(req, "")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	assert.NoError(t, err)
+
+	defer resp.Body.Close()
+
+	if b, err := ioutil.ReadAll(resp.Body); err == nil {
+		t.Log(string(b))
+	}
+
+	assert.Equal(t, 200, resp.StatusCode)
+}
+
+func TestGetLatestItem(t *testing.T) {
+	url := fmt.Sprintf("%s/wallet/%s/data/%s/latest", testUrl, walletID, "test123")
 	req, err := http.NewRequest("GET", url, nil)
 	assert.NoError(t, err)
 

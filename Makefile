@@ -5,6 +5,8 @@ build:
 	env GOOS=linux go build -ldflags="-s -w" -o bin/create-wallet lambdas/create-wallet/main.go
 	env GOOS=linux go build -ldflags="-s -w" -o bin/add-data lambdas/add-data/main.go
 	env GOOS=linux go build -ldflags="-s -w" -o bin/list-data lambdas/list-data/main.go
+	env GOOS=linux go build -ldflags="-s -w" -o bin/get-data lambdas/get-data/main.go
+	env GOOS=linux go build -ldflags="-s -w" -o bin/get-data-history lambdas/get-data-history/main.go
 
 clean:
 	rm -rf ./bin ./vendor Gopkg.lock

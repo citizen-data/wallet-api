@@ -56,6 +56,10 @@ type WalletDataItem struct {
 	CreatedAt       string   `json:"createdAt"`
 }
 
+type WalletDataItemList struct {
+	Items []*WalletDataItem
+}
+
 // WalletDataItem minus EncryptedChunks
 type WalletDataItemSummary struct {
 	ReferenceID     string   `json:"referenceId"`
@@ -75,5 +79,8 @@ type WalletStore interface {
 	CreateWallet(ctx context.Context, wallet *Wallet) error
 	GetWallet(ctx context.Context, tenantID, walletId string) (*Wallet, error)
 	ListData(ctx context.Context, tenantID, walletID string) (*WalletList, error)
+	GetLatestDataItem(ctx context.Context, tenantID, walletID, referenceID string) (*WalletDataItem, error)
+	GetDataItem(ctx context.Context, tenantID, walletID, referenceID, version string) (*WalletDataItem, error)
+	GetDataItemHistory(ctx context.Context, tenantID, walletID, referenceID string) (*WalletDataItemList, error)
 	AddDataItem(ctx context.Context, tenantID, walletID string, data *WalletDataItem) error
 }

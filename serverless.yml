@@ -49,7 +49,10 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
-      Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/wallet*"
+      Resource: [
+        "arn:aws:dynamodb:${self:provider.region}:*:table/wallet*",
+        "arn:aws:dynamodb:${self:provider.region}:*:table/wallet-data/index/*"
+      ]
     - Effect: Allow
       Action:
         - dynamodb:GetItem
@@ -96,7 +99,23 @@ functions:
     handler: bin/list-data
     events:
       - http:
-          path: wallet/{wallet}/list
+          path: wallet/{wallet}
+          method: get
+          cors: true
+          private: true
+  get-data:
+    handler: bin/get-data
+    events:
+      - http:
+          path: wallet/{wallet}/data/{referenceId}/{version}
+          method: get
+          cors: true
+          private: true
+  get-data-history:
+    handler: bin/get-data-history
+    events:
+      - http:
+          path: wallet/{wallet}/data/{referenceId}
           method: get
           cors: true
           private: true

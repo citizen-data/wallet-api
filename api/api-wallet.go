@@ -54,6 +54,77 @@ func (c *WalletAPI) AddData(ctx context.Context, request *ApiRequest) *ApiRespon
 	return ApiSuccessMessage("data saved successfully")
 }
 
+func (c *WalletAPI) GetData(ctx context.Context, request *ApiRequest) *ApiResponse {
+	walletID, ok := request.PathParams["wallet"]
+	if !ok {
+		return NewApiError("invalid wallet ID in path", ErrorValidation)
+	}
+
+	wallet, err := c.walletStore.GetWallet(ctx, request.TenantID, walletID)
+	if err != nil {
+		return NewApiError("error getting wallet "+walletID+": "+err.Error(), ErrorValidation)
+	}
+
+	err = request.ValidateSignature(wallet.PublicKeyBase64)
+	if err != nil {
+		return NewApiError("invalid signature: "+err.Error()+", pub="+wallet.PublicKeyBase64, ErrorUnauthorized)
+	}
+
+	refID, ok := request.PathParams["referenceId"]
+	if !ok {
+		return NewApiError("invalid reference ID in path", ErrorValidation)
+	}
+
+	version, ok := request.PathParams["version"]
+	if !ok {
+		return NewApiError("invalid version in path", ErrorValidation)
+	}
+
+
+	if version == "latest" {
+		res, err := c.walletStore.GetLatestDataItem(ctx, request.TenantID, walletID, refID)
+		if err != nil {
+			return NewApiError("error getting data: "+err.Error(), ErrorInternalError)
+		}
+		return ApiResponseObject(res)
+	} else {
+		res, err := c.walletStore.GetDataItem(ctx, request.TenantID, walletID, refID, version)
+		if err != nil {
+			return NewApiError("error getting data: "+err.Error(), ErrorInternalError)
+		}
+		return ApiResponseObject(res)
+	}
+}
+
+func (c *WalletAPI) GetDataHistory(ctx context.Context, request *ApiRequest) *ApiResponse {
+	walletID, ok := request.PathParams["wallet"]
+	if !ok {
+		return NewApiError("invalid wallet ID in path", ErrorValidation)
+	}
+
+	wallet, err := c.walletStore.GetWallet(ctx, request.TenantID, walletID)
+	if err != nil {
+		return NewApiError("error getting wallet "+walletID+": "+err.Error(), ErrorValidation)
+	}
+
+	err = request.ValidateSignature(wallet.PublicKeyBase64)
+	if err != nil {
+		return NewApiError("invalid signature: "+err.Error()+", pub="+wallet.PublicKeyBase64, ErrorUnauthorized)
+	}
+
+	refID, ok := request.PathParams["referenceId"]
+	if !ok {
+		return NewApiError("invalid reference ID in path", ErrorValidation)
+	}
+
+	res, err := c.walletStore.GetDataItemHistory(ctx, request.TenantID, walletID, refID)
+	if err != nil {
+		return NewApiError("error getting data: "+err.Error(), ErrorInternalError)
+	}
+	return ApiResponseObject(res)
+}
+
+
 func (c *WalletAPI) ListData(ctx context.Context, request *ApiRequest) *ApiResponse {
 	walletID, ok := request.PathParams["wallet"]
 	if !ok {
