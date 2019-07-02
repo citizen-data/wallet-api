@@ -5,9 +5,9 @@ POST    /wallet                                 Create wallet
 GET     /wallet/{walletID}                      Get wallet metadata
 POST    /wallet/{walletID}/data                 Add data item
 GET     /wallet/{walletID}/data                 Get list of data (summary data)
-GET     /wallet/{walletID}/{refID}              Get history for dataItem (including encrypted data)
-GET     /wallet/{walletID}/{refID}/latest       Get latest version of dataItem (including encrypted data)
-GET     /wallet/{walletID}/{refID}/{dataHash}   Get specific version of dataItem  (including encrypted data)
+GET     /wallet/{walletID}/{refID}              Get history for dataItem (w/encrypted data)
+GET     /wallet/{walletID}/{refID}/latest       Get latest version of dataItem (w/encrypted data)
+GET     /wallet/{walletID}/{refID}/{dataHash}   Get specific version of dataItem (w/encrypted data)
 ```
 
 
