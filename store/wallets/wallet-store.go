@@ -1,0 +1,79 @@
+package wallets
+
+import (
+	"context"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/json"
+	"errors"
+)
+
+type Wallet struct {
+
+	// TenantID is set by API via API-KEY
+	TenantID string `json:"tenantId"`
+
+	// WalletID is set by API (sha256 of public key)
+	WalletID string `json:"walletId"`
+
+	//PublicKeyBase64 Base64 of public RSA pem
+	PublicKeyBase64 string `json:"publicKeyBase64"`
+
+	//PrivateKeyEncrypted is opaque/encrypted private key for recovery
+	PrivateKeyEncrypted string `json:"privateKeyEncrypted"`
+}
+
+func (w *Wallet) Json() string {
+	res, err := json.Marshal(w)
+	if err != nil {
+		panic(err)
+	}
+	return string(res)
+}
+
+func (w *Wallet) CalculateWalletId() (string, error) {
+	if w.PublicKeyBase64 == "" {
+		return "", errors.New("cannot calculate ID from blank public key")
+	}
+	publicKey, err := base64.StdEncoding.DecodeString(w.PublicKeyBase64)
+	if err != nil {
+		return "", err
+	}
+	b := sha256.Sum256([]byte(publicKey))
+	return base64.StdEncoding.EncodeToString(b[:]), nil
+}
+
+
+type WalletList struct {
+	//map of reference IDs to versions, ordered from oldest to newest
+	Items map[string][]*WalletDataItemSummary `json:"items"`
+}
+
+type WalletDataItem struct {
+	ReferenceID     string   `json:"referenceId"`
+	EncryptedChunks []string `json:"encryptedChunks"`
+	DataSignature   string   `json:"dataSignature"`
+	CreatedAt       string   `json:"createdAt"`
+}
+
+// WalletDataItem minus EncryptedChunks
+type WalletDataItemSummary struct {
+	ReferenceID     string   `json:"referenceId"`
+	DataSignature   string   `json:"dataSignature"`
+	CreatedAt       string   `json:"createdAt"`
+}
+
+func (w *WalletDataItem) Json() string {
+	res, err := json.Marshal(w)
+	if err != nil {
+		panic(err)
+	}
+	return string(res)
+}
+
+type WalletStore interface {
+	CreateWallet(ctx context.Context, wallet *Wallet) error
+	GetWallet(ctx context.Context, tenantID, walletId string) (*Wallet, error)
+	ListData(ctx context.Context, tenantID, walletID string) (*WalletList, error)
+	AddDataItem(ctx context.Context, tenantID, walletID string, data *WalletDataItem) error
+}
