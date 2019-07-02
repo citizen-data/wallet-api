@@ -39,7 +39,7 @@ type DynamoWalletData struct {
 	Summary     *WalletDataItemSummary `json:"summary"`
 	ReferenceID string                 `json:"referenceId"`
 	CreatedAt   string                 `json:"createdAt"`
-	VersionHash    string                 `json:"versionHash"`
+	VersionHash string                 `json:"versionHash"`
 }
 
 func NewAWSWalletStore(db *dynamodb.DynamoDB, s3 *s3.S3) *AWSWalletStore {
@@ -101,9 +101,9 @@ func (s *AWSWalletStore) AddDataItem(ctx context.Context, tenantID, walletID str
 			DataSignature: data.DataSignature,
 			ReferenceID:   data.ReferenceID,
 			CreatedAt:     data.CreatedAt,
-			VersionHash:      data.VersionHash,
+			VersionHash:   data.VersionHash,
 		},
-		VersionHash:      data.VersionHash,
+		VersionHash: data.VersionHash,
 		CreatedAt:   data.CreatedAt,
 		ReferenceID: fmt.Sprintf("%s/%s/%s", tenantID, walletID, data.ReferenceID),
 	})
@@ -203,7 +203,7 @@ func (s *AWSWalletStore) getObjects(objectKeys []string) ([]*WalletDataItem, err
 		return nil, err
 	}
 
-	results := make([]*WalletDataItem, len(objectKeys), 0)
+	results := make([]*WalletDataItem, 0, len(objectKeys))
 	for _, objKey := range objectKeys {
 		if obj, ok := resultsMap[objKey]; ok {
 			results = append(results, obj)
@@ -268,6 +268,7 @@ func (s *AWSWalletStore) GetDataItemHistory(ctx context.Context, tenantID, walle
 
 	var objectKeys []string
 	err = s.db.QueryPagesWithContext(ctx, &dynamodb.QueryInput{
+		TableName:                 aws.String(dataTable),
 		IndexName:                 aws.String(dataRefIndex),
 		KeyConditionExpression:    expr.KeyCondition(),
 		ExpressionAttributeNames:  expr.Names(),

@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -110,6 +111,10 @@ func signRequest(req *http.Request, body string) {
 	req.Header.Set("x-api-timestamp", timestamp)
 	req.Header.Set("x-api-signature", signature)
 	req.Header.Set("Content-Type", "application/json")
+}
+
+func urlEncode(str string) string {
+	return url.PathEscape(str)
 }
 
 func encrypt(plaintext string) string {

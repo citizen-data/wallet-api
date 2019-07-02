@@ -40,7 +40,7 @@ func (w *Wallet) CalculateWalletId() (string, error) {
 		return "", err
 	}
 	b := sha256.Sum256([]byte(publicKey))
-	return base64.StdEncoding.EncodeToString(b[:]), nil
+	return base64.URLEncoding.EncodeToString(b[:]), nil
 }
 
 type WalletList struct {

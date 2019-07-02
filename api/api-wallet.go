@@ -51,7 +51,7 @@ func (c *WalletAPI) AddData(ctx context.Context, request *ApiRequest) *ApiRespon
 
 	encrypted := strings.Join(dataItem.EncryptedChunks,"")
 	hash := sha256.Sum256([]byte(encrypted))
-	dataItem.VersionHash = base64.StdEncoding.EncodeToString(hash[:])
+	dataItem.VersionHash = base64.URLEncoding.EncodeToString(hash[:])
 
 	err = c.walletStore.AddDataItem(ctx, request.TenantID, walletID, &dataItem)
 
