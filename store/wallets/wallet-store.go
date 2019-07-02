@@ -57,7 +57,7 @@ type WalletDataItem struct {
 }
 
 type WalletDataItemList struct {
-	Items []*WalletDataItem
+	Items []*WalletDataItem `json:"items"`
 }
 
 // WalletDataItem minus EncryptedChunks
