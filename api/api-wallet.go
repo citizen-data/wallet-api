@@ -240,3 +240,17 @@ func (c *WalletAPI) ShareDataItem(ctx context.Context, request *ApiRequest) *Api
 
 	return ApiSuccessMessage("data saved successfully")
 }
+
+func (c *WalletAPI) GetPublicKey(ctx context.Context, request *ApiRequest) *ApiResponse {
+	walletID, ok := request.PathParams["wallet"]
+	if !ok {
+		return NewApiError("invalid wallet ID in path", ErrorValidation)
+	}
+
+	wallet, err := c.walletStore.GetWallet(ctx, request.TenantID, walletID)
+	if err != nil {
+		return NewApiError("error getting wallet "+walletID+": "+err.Error(), ErrorValidation)
+	}
+
+	return ApiResponseObject(wallet.PublicKeyBase64)
+}

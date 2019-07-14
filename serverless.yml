@@ -143,7 +143,14 @@ functions:
           method: get
           cors: true
           private: true
-
+  get-public-key:
+    handler: bin/get-public-key
+    events:
+      - http:
+          path: public/key/{wallet}
+          method: get
+          cors: true
+          private: true
 
 
 #    The following are a few example events you can configure

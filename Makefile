@@ -12,6 +12,8 @@ build:
 	env GOOS=linux go build -ldflags="-s -w" -o bin/list-shared-data lambdas/list-shared-data/main.go
 	env GOOS=linux go build -ldflags="-s -w" -o bin/get-shared-data lambdas/get-shared-data/main.go
 	env GOOS=linux go build -ldflags="-s -w" -o bin/share-data lambdas/share-data/main.go
+	env GOOS=linux go build -ldflags="-s -w" -o bin/get-public-key lambdas/get-public-key/main.go
+
 
 clean:
 	rm -rf ./bin ./vendor Gopkg.lock

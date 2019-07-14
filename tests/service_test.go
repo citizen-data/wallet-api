@@ -153,7 +153,11 @@ func TestShareData(t *testing.T) {
 	assert.Equal(t, 200, resp.StatusCode)
 }
 
-func TestGetISharetems(t *testing.T) {
-	// get wallet list
+func TestGetShareItems(t *testing.T) {
 	get(t, fmt.Sprintf("%s/wallet/%s/shares", testUrl, urlEncode(walletID)))
 }
+
+func TestGetPublicKey(t *testing.T) {
+	get(t, fmt.Sprintf("%s/public/key/%s", testUrl, urlEncode(walletID)))
+}
+
