@@ -7,6 +7,9 @@ GET     /wallet/{walletID}                          Get list of data (summary da
 GET     /wallet/{walletID}/data/{refID}             Get history for dataItem (w/encrypted data)
 GET     /wallet/{walletID}/data/{refID}/latest      Get latest version of dataItem (w/encrypted data)
 GET     /wallet/{walletID}/data/{refID}/{dataHash}  Get specific version of dataItem (w/encrypted data)
+POST    /wallet/{walletID}/share/{toWalletID}/data  Share Data with toWalletID
+GET     /wallet/{walletID}/shares                   Get Data shared with Self
+GET     /wallet/{walletID}/share/{fromWalletID}/{refID}/{dataHash}  Get Shared Data (w/encrypted data)
 ```
 
 

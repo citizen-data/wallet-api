@@ -76,6 +76,7 @@ func (w *WalletDataItem) Json() string {
 	return string(res)
 }
 
+
 type WalletStore interface {
 	CreateWallet(ctx context.Context, wallet *Wallet) error
 	GetWallet(ctx context.Context, tenantID, walletId string) (*Wallet, error)
@@ -84,4 +85,8 @@ type WalletStore interface {
 	GetDataItem(ctx context.Context, tenantID, walletID, referenceID, hash string) (*WalletDataItem, error)
 	GetDataItemHistory(ctx context.Context, tenantID, walletID, referenceID string) (*WalletDataItemList, error)
 	AddDataItem(ctx context.Context, tenantID, walletID string, data *WalletDataItem) error
+	ListSharedItems(ctx context.Context, tenantID, toWalletID string) (*WalletList, error)
+	ShareDataItem(ctx context.Context, tenantID, fromWalletID, toWalletID string, data *WalletDataItem) error
+	GetSharedDataItem(ctx context.Context, tenantID, fromWalletID, toWalletID, referenceID, hash string) (*WalletDataItem, error)
+
 }

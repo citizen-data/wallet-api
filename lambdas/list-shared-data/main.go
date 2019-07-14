@@ -20,7 +20,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		return *api.LambdaResponseFromApiResponse(resp), nil
 	}
 
-	apiResp := walletAPI.ShareDataItem(ctx, req)
+	apiResp := walletAPI.ListMySharedItems(ctx, req)
 	return *api.LambdaResponseFromApiResponse(apiResp), nil
 }
 

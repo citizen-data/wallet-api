@@ -16,10 +16,13 @@ import (
 )
 
 const (
-	walletTable  = "wallets"
-	dataTable    = "wallet-data"
-	dataRefIndex = "referenceId-createdAt-index"
-	bucket       = "data-wallet-storage"
+	walletTable    = "wallets"
+	dataTable      = "wallet-data"
+	shareTable     = "share-data"
+	shareFromIndex = "share-from-index"
+	shareToIndex   = "share-to-index"
+	dataRefIndex   = "referenceId-createdAt-index"
+	bucket         = "data-wallet-storage"
 )
 
 type AWSWalletStore struct {
@@ -38,6 +41,16 @@ type DynamoWalletData struct {
 	ObjectKey   string                 `json:"objectKey"`
 	Summary     *WalletDataItemSummary `json:"summary"`
 	ReferenceID string                 `json:"referenceId"`
+	CreatedAt   string                 `json:"createdAt"`
+	VersionHash string                 `json:"versionHash"`
+}
+
+type DynamoWalletShare struct {
+	ReferenceID string                 `json:"referenceId"`
+	ObjectKey   string                 `json:"objectKey"`
+	Summary     *WalletDataItemSummary `json:"summary"`
+	FromWallet  string                 `json:"fromWallet"`
+	ToWallet    string                 `json:"toWallet"`
 	CreatedAt   string                 `json:"createdAt"`
 	VersionHash string                 `json:"versionHash"`
 }
@@ -91,9 +104,20 @@ func (s *AWSWalletStore) GetWallet(ctx context.Context, tenantID, walletID strin
 	return wallet.Wallet, nil
 }
 
-func (s *AWSWalletStore) AddDataItem(ctx context.Context, tenantID, walletID string, data *WalletDataItem) error {
-	objectKey := fmt.Sprintf("%s/%s/%s/%s", tenantID, walletID, data.ReferenceID, data.VersionHash)
+func (s *AWSWalletStore) putS3Object(bucket, objectKey string, data *WalletDataItem) error {
+	b, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	_, err = s.s3.PutObject(&s3.PutObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(objectKey),
+		Body:   bytes.NewReader(b),
+	})
+	return err
+}
 
+func (s *AWSWalletStore) addObjectkey(ctx context.Context, tenantID, walletID, objectKey, refID string, data *WalletDataItem) error {
 	item, err := dynamodbattribute.MarshalMap(&DynamoWalletData{
 		WalletID:  fmt.Sprintf("%s/%s", tenantID, walletID),
 		ObjectKey: objectKey,
@@ -105,9 +129,14 @@ func (s *AWSWalletStore) AddDataItem(ctx context.Context, tenantID, walletID str
 		},
 		VersionHash: data.VersionHash,
 		CreatedAt:   data.CreatedAt,
-		ReferenceID: fmt.Sprintf("%s/%s/%s", tenantID, walletID, data.ReferenceID),
+		ReferenceID: refID,
 	})
 
+	if err != nil {
+		return err
+	}
+
+	err = s.putS3Object(bucket, objectKey, data)
 	if err != nil {
 		return err
 	}
@@ -117,21 +146,13 @@ func (s *AWSWalletStore) AddDataItem(ctx context.Context, tenantID, walletID str
 		Item:      item,
 	})
 
-	b, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
-	_, err = s.s3.PutObject(&s3.PutObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(objectKey),
-		Body:   bytes.NewReader(b),
-	})
-
-	if err != nil {
-		return err
-	}
-
 	return err
+}
+
+func (s *AWSWalletStore) AddDataItem(ctx context.Context, tenantID, walletID string, data *WalletDataItem) error {
+	objectKey := fmt.Sprintf("%s/%s/%s/%s", tenantID, walletID, data.ReferenceID, data.VersionHash)
+	refID := fmt.Sprintf("%s/%s/%s", tenantID, walletID, data.ReferenceID)
+	return s.addObjectkey(ctx, tenantID, walletID, objectKey, refID, data)
 }
 
 func calcWalletID(tenantID, walletID string) string {
@@ -338,4 +359,84 @@ func (s *AWSWalletStore) ListData(ctx context.Context, tenantID, walletID string
 	return &WalletList{
 		Items: itemMap,
 	}, nil
+}
+
+func (s *AWSWalletStore) ListSharedItems(ctx context.Context, tenantID, toWalletID string) (*WalletList, error) {
+	itemMap := make(map[string][]*WalletDataItemSummary)
+
+	key := expression.Key("toWalletId").Equal(expression.Value(calcWalletID(tenantID, toWalletID)))
+
+	expr, err := expression.NewBuilder().WithKeyCondition(key).Build()
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.db.QueryPagesWithContext(ctx, &dynamodb.QueryInput{
+		TableName:                 aws.String(shareTable),
+		IndexName:                 aws.String(toWalletID),
+		KeyConditionExpression:    expr.KeyCondition(),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+	},
+		func(page *dynamodb.QueryOutput, lastPage bool) bool {
+			for _, item := range page.Items {
+				var dwd DynamoWalletData
+				err = dynamodbattribute.UnmarshalMap(item, &dwd)
+				if err != nil {
+					//TODO: handle this?
+					continue
+				}
+				itemMap[dwd.Summary.ReferenceID] = append(itemMap[dwd.Summary.ReferenceID], dwd.Summary)
+			}
+			return lastPage
+		})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &WalletList{
+		Items: itemMap,
+	}, nil
+}
+
+func (s *AWSWalletStore) GetSharedDataItem(ctx context.Context, tenantID, fromWalletID, toWalletID, referenceID, hash string) (*WalletDataItem, error) {
+	objectKey := fmt.Sprintf("%s/%s/%s/%s/%s", tenantID, fromWalletID, toWalletID, referenceID, hash)
+	return s.getObject(objectKey)
+}
+
+func (s *AWSWalletStore) ShareDataItem(ctx context.Context, tenantID, fromWalletID, toWalletID string, data *WalletDataItem) error {
+	refID := fmt.Sprintf("%s/%s/%s/%s", tenantID, fromWalletID, toWalletID, data.ReferenceID)
+	objectKey := fmt.Sprintf("%s/%s", refID, data.VersionHash)
+
+	err := s.putS3Object(bucket, objectKey, data)
+	if err != nil {
+		return err
+	}
+
+	item, err := dynamodbattribute.MarshalMap(&DynamoWalletShare{
+		FromWallet: fmt.Sprintf("%s/%s", tenantID, fromWalletID),
+		ToWallet:   fmt.Sprintf("%s/%s", tenantID, toWalletID),
+		ObjectKey:  objectKey,
+		Summary: &WalletDataItemSummary{
+			DataSignature: data.DataSignature,
+			ReferenceID:   data.ReferenceID,
+			CreatedAt:     data.CreatedAt,
+			VersionHash:   data.VersionHash,
+		},
+		VersionHash: data.VersionHash,
+		CreatedAt:   data.CreatedAt,
+		ReferenceID: refID,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	_, err = s.db.PutItem(&dynamodb.PutItemInput{
+		TableName: aws.String(shareTable),
+		Item:      item,
+	})
+
+	return err
 }

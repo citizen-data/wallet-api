@@ -119,6 +119,32 @@ functions:
           method: get
           cors: true
           private: true
+  share-data:
+    handler: bin/share-data
+    events:
+      - http:
+          path: wallet/{wallet}/share/{toWallet}/data
+          method: post
+          cors: true
+          private: true
+  list-shared-data:
+    handler: bin/list-shared-data
+    events:
+      - http:
+          path: wallet/{wallet}/shares
+          method: get
+          cors: true
+          private: true
+  get-shared-data:
+    handler: bin/get-shared-data
+    events:
+      - http:
+          path: wallet/{wallet}/share/{fromWallet}/{referenceId}/{version}
+          method: get
+          cors: true
+          private: true
+
+
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
