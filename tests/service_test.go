@@ -120,3 +120,40 @@ func TestGetItems(t *testing.T) {
 
 }
 
+func TestShareData(t *testing.T) {
+	url := fmt.Sprintf("%s/wallet/%s/share/%s/data", testUrl, urlEncode(walletID), urlEncode(walletID))
+
+
+	dataItem := &wallets.WalletDataItem{
+		ReferenceID: "test123",
+		DataSignature: "signature",
+		EncryptedChunks: []string{
+			uuid.New().String(),
+			uuid.New().String(),
+			uuid.New().String(),
+		},
+	}
+
+	var jsonStr = []byte(dataItem.Json())
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+	assert.NoError(t, err)
+
+	signRequest(req, string(jsonStr))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	assert.NoError(t, err)
+
+	defer resp.Body.Close()
+
+	if b, err := ioutil.ReadAll(resp.Body); err == nil {
+		t.Log(string(b))
+	}
+
+	assert.Equal(t, 200, resp.StatusCode)
+}
+
+func TestGetISharetems(t *testing.T) {
+	// get wallet list
+	get(t, fmt.Sprintf("%s/wallet/%s/shares", testUrl, urlEncode(walletID)))
+}
