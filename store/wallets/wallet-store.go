@@ -88,5 +88,4 @@ type WalletStore interface {
 	ListSharedItems(ctx context.Context, tenantID, toWalletID string) (*WalletList, error)
 	ShareDataItem(ctx context.Context, tenantID, fromWalletID, toWalletID string, data *WalletDataItem) error
 	GetSharedDataItem(ctx context.Context, tenantID, fromWalletID, toWalletID, referenceID, hash string) (*WalletDataItem, error)
-
 }

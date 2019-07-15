@@ -49,8 +49,10 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
+        - dynamodb:BatchWriteItem
       Resource: [
         "arn:aws:dynamodb:${self:provider.region}:*:table/wallet*",
+        "arn:aws:dynamodb:${self:provider.region}:*:table/wallet-shares/index/*",
         "arn:aws:dynamodb:${self:provider.region}:*:table/wallet-data/index/*"
       ]
     - Effect: Allow
@@ -139,7 +141,7 @@ functions:
     handler: bin/get-shared-data
     events:
       - http:
-          path: wallet/{wallet}/share/{fromWallet}/{referenceId}/{version}
+          path: wallet/{wallet}/share/data/{fromWallet}/{referenceId}/{version}
           method: get
           cors: true
           private: true

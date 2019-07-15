@@ -18,9 +18,8 @@ import (
 const (
 	walletTable    = "wallets"
 	dataTable      = "wallet-data"
-	shareTable     = "share-data"
-	shareFromIndex = "share-from-index"
-	shareToIndex   = "share-to-index"
+	shareTable     = "wallet-shares"
+	shareToIndex   = "toWallet-objectKey-index"
 	dataRefIndex   = "referenceId-createdAt-index"
 	bucket         = "data-wallet-storage"
 )
@@ -364,7 +363,7 @@ func (s *AWSWalletStore) ListData(ctx context.Context, tenantID, walletID string
 func (s *AWSWalletStore) ListSharedItems(ctx context.Context, tenantID, toWalletID string) (*WalletList, error) {
 	itemMap := make(map[string][]*WalletDataItemSummary)
 
-	key := expression.Key("toWalletId").Equal(expression.Value(calcWalletID(tenantID, toWalletID)))
+	key := expression.Key("toWallet").Equal(expression.Value(calcWalletID(tenantID, toWalletID)))
 
 	expr, err := expression.NewBuilder().WithKeyCondition(key).Build()
 	if err != nil {
@@ -373,14 +372,14 @@ func (s *AWSWalletStore) ListSharedItems(ctx context.Context, tenantID, toWallet
 
 	err = s.db.QueryPagesWithContext(ctx, &dynamodb.QueryInput{
 		TableName:                 aws.String(shareTable),
-		IndexName:                 aws.String(toWalletID),
+		IndexName:                 aws.String(shareToIndex),
 		KeyConditionExpression:    expr.KeyCondition(),
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 	},
 		func(page *dynamodb.QueryOutput, lastPage bool) bool {
 			for _, item := range page.Items {
-				var dwd DynamoWalletData
+				var dwd DynamoWalletShare
 				err = dynamodbattribute.UnmarshalMap(item, &dwd)
 				if err != nil {
 					//TODO: handle this?
