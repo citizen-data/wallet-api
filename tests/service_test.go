@@ -154,7 +154,20 @@ func TestShareData(t *testing.T) {
 }
 
 func TestGetShareItems(t *testing.T) {
-	get(t, fmt.Sprintf("%s/wallet/%s/shares", testUrl, urlEncode(walletID)))
+	b := get(t, fmt.Sprintf("%s/wallet/%s/shares", testUrl, urlEncode(walletID)))
+
+	var data wallets.WalletList
+	err := json.Unmarshal(b, &data)
+	assert.NoError(t, err)
+
+	for k, v := range data.Items {
+		t.Log(k)
+		for _, i := range v {
+			dataUrl := fmt.Sprintf("%s/wallet/%s/share/data/%s/%s/%s", testUrl, urlEncode(walletID), urlEncode(walletID), i.ReferenceID, i.VersionHash)
+			t.Logf(dataUrl)
+			get(t, dataUrl)
+		}
+	}
 }
 
 func TestGetPublicKey(t *testing.T) {
